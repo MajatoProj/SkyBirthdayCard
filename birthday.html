@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#141033">
+<title>Happy Birthday 🎂</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { min-height: 100vh; display: grid; place-items: center; text-align: center; color: #fff;
+         overflow: hidden; padding: 24px 16px;
+         font-family: "Trebuchet MS", system-ui, sans-serif;
+         background: linear-gradient(#141033 0%, #3d3168 40%, #a07d9e 75%, #f0c3a4 100%); }
+  .cake { font-size: 96px; animation: float 3s ease-in-out infinite; filter: drop-shadow(0 0 25px #ffe8a3); }
+  @keyframes float { 50% { translate: 0 -12px; } }
+  h1 { font-weight: normal; font-size: clamp(32px, 10vw, 54px); margin: 18px 0 14px;
+       text-shadow: 0 0 14px #ffe8a3, 0 0 30px #ffb3c6; }
+  p { max-width: 360px; margin: 0 auto; line-height: 1.5; opacity: .92; }
+  a { display: inline-block; margin-top: 28px; color: #fff; opacity: .7; font-size: 14px; }
+  .light { position: fixed; bottom: -20px; font-size: 20px; pointer-events: none;
+           animation: rise linear forwards; }
+  @keyframes rise { to { translate: 0 -115vh; opacity: 0; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="cake">🎂</div>
+  <h1>Happy Birthday!</h1>
+  <!-- write your message here -->
+  <p>You unlocked everything ✨</p>
+  <a href="index.html">← back to the tree</a>
+</main>
+<script>
+  // floating lights / hearts like spirits rising
+  const bits = ["✦", "♥", "✧", "🤍", "💙"];
+  setInterval(() => {
+    const s = document.createElement("span");
+    s.className = "light";
+    s.textContent = bits[Math.random() * bits.length | 0];
+    s.style.left = Math.random() * 100 + "vw";
+    s.style.animationDuration = 5 + Math.random() * 5 + "s";
+    document.body.append(s);
+    setTimeout(() => s.remove(), 10000);
+  }, 350);
+</script>
+</body>
+</html>

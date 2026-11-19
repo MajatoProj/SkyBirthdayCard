@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1e">
+<title>For You ✨</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    min-height: 100vh; color: #fff; overflow-x: hidden;
+    font-family: "Trebuchet MS", system-ui, sans-serif;
+    /* night sky fading into a dark meadow */
+    background: linear-gradient(#0b1220 0%, #16304a 30%, #1d4a52 55%, #1c4a3e 75%, #0d2a22 100%) fixed;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .grass { position: fixed; left: 0; right: 0; bottom: 0; height: 35vh; pointer-events: none;
+    background: repeating-linear-gradient(95deg, #0000 0 5px, #2d5a2a33 5px 7px, #0000 7px 13px),
+                linear-gradient(#0000, #0a1a0e);
+    mask-image: linear-gradient(#0000, #000 40%); -webkit-mask-image: linear-gradient(#0000, #000 40%); }
+  .mote { position: fixed; border-radius: 50%; background: #fff; pointer-events: none;
+          box-shadow: 0 0 8px #fff; animation: drift linear infinite; }
+  @keyframes drift { 0% { translate: 0 0; opacity: 0; } 20%, 80% { opacity: .7; } 100% { translate: 20px -140px; opacity: 0; } }
+
+  h1 { position: relative; text-align: center; font-weight: normal; letter-spacing: 3px; font-size: 18px;
+       padding: 26px 16px 0; opacity: .85; text-shadow: 0 0 10px #fff8; }
+
+  .tree { position: relative; margin: 0 auto; max-width: 420px; }
+  .tree svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .tree line { stroke: #ffffff40; stroke-width: 1.5; }
+  .tree line.lit { stroke: #f0d595; stroke-width: 1.8; filter: drop-shadow(0 0 3px #f3d48a99); }
+
+  .node { position: absolute; translate: -50% -50%; width: 70px; height: 70px; border-radius: 50%; border: none;
+          display: grid; place-items: center; font-size: 36px; cursor: pointer; color: inherit; padding: 0;
+          background: none; }
+  .node img { width: 60px; height: 60px; object-fit: contain; }
+
+  /* unlocked = white glyph with warm glow, locked = faded blue glyph (like Sky) */
+  .unlocked .icon { filter: brightness(0) invert(.9) sepia(1) saturate(1.6) brightness(1.05) drop-shadow(0 0 5px #f3d48a99); }
+  .unlocked { background: radial-gradient(#f3d48a33, #0000 65%); }
+  .locked .icon { filter: brightness(0) invert(.75) sepia(1) saturate(5) hue-rotate(165deg) blur(var(--blur, 4px)); opacity: .55; }
+
+  /* ready = next gift she can tap: pulsing golden halo */
+  .ready::after { content: ""; position: absolute; inset: -10px; border-radius: 50%; pointer-events: none;
+                  background: radial-gradient(#ffe9b070, #0000 65%); animation: halo 1.6s ease-in-out infinite; }
+  @keyframes halo { 50% { opacity: .25; scale: .85; } }
+  .tree line { transition: stroke .8s; }
+  .cake { width: 92px; height: 92px; font-size: 50px; }
+  .cake.unlocked { animation: pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 50% { scale: 1.1; filter: drop-shadow(0 0 18px #ffe9b0); } }
+  .root { position: absolute; translate: -50% -50%; font-size: 30px; letter-spacing: 1px;
+          text-shadow: 0 0 12px #fff8; white-space: nowrap; }
+
+  .shake { animation: shake .4s; }
+  @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  .new { animation: reveal 1.6s ease-out; }
+  @keyframes reveal { 0% { scale: .3; filter: brightness(3); } 60% { scale: 1.25; } 100% { scale: 1; } }
+
+  .toast { position: fixed; left: 50%; bottom: 30px; translate: -50% 0; padding: 10px 18px;
+           border-radius: 20px; background: #000a; backdrop-filter: blur(6px); font-size: 14px;
+           opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  dialog { margin: auto; border: none; border-radius: 22px; padding: 26px 22px; max-width: min(340px, 90vw);
+           text-align: center; color: #fff; background: linear-gradient(#1f2742, #173222);
+           box-shadow: 0 0 0 1px #fff3, 0 0 40px #ffe9b066; }
+  dialog::backdrop { background: #000a; backdrop-filter: blur(3px); }
+  dialog .big { font-size: 70px; }
+  dialog .big img { width: 140px; height: 140px; object-fit: contain; }
+  dialog h2 { font-weight: normal; margin: 8px 0; }
+  dialog p { opacity: .9; line-height: 1.4; }
+  dialog .num { margin-top: 10px; font-size: 12px; letter-spacing: 2px; opacity: .6; }
+  dialog .gnum { color: #ffe9b0; text-shadow: 0 0 12px #ffe9b0; }
+  #grab .big { animation: pulse 1.8s ease-in-out infinite; }
+  dialog button { margin-top: 18px; padding: 8px 22px; border-radius: 20px; border: 1px solid #fff8;
+                  background: #fff2; color: #fff; font: inherit; }
+</style>
+</head>
+<body>
+<div class="grass"></div>
+<h1>✦ for you ✦</h1>
+<div class="tree" id="tree"><svg id="lines"></svg></div>
+
+<dialog id="dlg">
+  <div class="big" id="dIcon"></div>
+  <h2 id="dName"></h2>
+  <p id="dNote"></p>
+  <p class="num" id="dNum"></p>
+  <button onclick="dlg.close()">close</button>
+</dialog>
+<dialog id="grab">
+  <div class="big">🎁</div>
+  <p>Something new unlocked ✨</p>
+  <h2>Grab present <span class="gnum" id="grabNum"></span>!</h2>
+  <button onclick="grab.close()">okay! ♡</button>
+</dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== EDIT HERE =====
+// Order = bottom to top, and the present number = position in this list (1st = present #1).
+// She unlocks them herself: a gift opens once the gift below it (and everything listed before
+// that) is claimed. Ready gifts have a golden halo; tapping shows "Grab present #N!" and lights it up.
+// side: leave out = on the main trunk; "left" / "right" = branches off the trunk node below it.
+// icon: an emoji, or an image like "img/necklace.png" (transparent PNG works best).
+// blur: optional, how blurry the locked silhouette is in px (default 4, 0 = sharp).
+const ROOT = "Uiltje"; // name at the bottom of the tree
+const ITEMS = [
+  { name: "Noibat Card",          icon: "img/card.png",   note: "Write a little message here." },
+  { name: "Miku's Leek",          icon: "img/leek.png",   note: "Write a little message here." },
+  { name: "Plushie",              icon: "img/plush.png",  note: "Write a little message here.", side: "left", blur: 6 },
+  { name: "Constellation Hoodie", icon: "img/hoodie.png", note: "Write a little message here.", side: "right" },
+  { name: "Miku Figure",          icon: "img/miku.png",   note: "Write a little message here." },
+  { name: "Sky Collection Box",   icon: "img/skybox.png", note: "Write a little message here." },
+];
+// =====================
+
+const ROW = 130, SIDE = 0.3; // vertical gap between trunk nodes; side branch offset (fraction of width)
+const tree = document.getElementById("tree"), svg = document.getElementById("lines");
+const iconHTML = i => i.includes(".") ? `<img class="icon" src="${i}" alt="">` : `<span class="icon">${i}</span>`;
+const claimed = []; // not saved: every refresh starts the tree over
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1800);
+}
+function shake(el) { el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); }
+
+// layout in "rows": trunk nodes go up one row; side nodes hang off the last trunk node, a bit higher
+const rootPt = { x: 0, y: 0, sides: { left: 0, right: 0 } };
+let trunk = rootPt, row = 0;
+const pts = ITEMS.map(it => {
+  if (!it.side || trunk === rootPt) {
+    const p = { x: 0, y: ++row, parent: trunk, sides: { left: 0, right: 0 } };
+    return trunk = p;
+  }
+  const n = ++trunk.sides[it.side];
+  return { x: it.side === "left" ? -1 : 1, y: trunk.y + 0.35 + 0.45 * n, parent: trunk };
+});
+const cakePt = { x: 0, y: Math.max(row + 1, ...pts.map(p => Math.ceil(p.y))), parent: trunk };
+const H = cakePt.y * ROW + 150;
+tree.style.height = H + "px";
+
+function place(el, p) {
+  el.style.left = `calc(50% + ${p.x * SIDE * 100}%)`;
+  el.style.top = (H - 50 - p.y * ROW) + "px";
+}
+function line(a, b, lit) {
+  if (!a) return;
+  const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  // shortcut: px from width at load, lines won't follow a phone rotation until reload
+  const W = tree.clientWidth, X = p => W * (0.5 + p.x * SIDE), Y = p => H - 50 - p.y * ROW;
+  const dx = X(b) - X(a), dy = Y(b) - Y(a), len = Math.hypot(dx, dy);
+  const gap = (p, r) => [X(p) + dx / len * r, Y(p) + dy / len * r];
+  const [x1, y1] = gap(a, a === rootPt ? 24 : 40), [x2, y2] = gap(b, b === cakePt ? -52 : -40);
+  l.setAttribute("x1", x1); l.setAttribute("y1", y1);
+  l.setAttribute("x2", x2); l.setAttribute("y2", y2);
+  if (lit) l.classList.add("lit");
+  svg.append(l);
+  return l;
+}
+
+// on = she claimed it this visit
+// avail = the gift it branches from, and every gift listed before that one, are claimed
+// (so branches off the same gift open together, in any order, and the next one waits for all of them)
+const isOn = i => claimed.includes(i);
+const avail = i => {
+  const parent = pts.indexOf(pts[i].parent); // -1 = grows from the name at the bottom
+  return ITEMS.every((_, j) => j > parent || isOn(j));
+};
+const lines = [], buttons = [];
+let pending = null; // gift waiting for the grab popup to close
+
+function setState(b, i) {
+  const it = ITEMS[i], on = isOn(i);
+  b.className = "node " + (on ? "unlocked" : "locked") + (avail(i) && !on ? " ready" : "");
+  b.innerHTML = iconHTML(it.icon); // no name under the icon: it would give the gift away
+}
+
+ITEMS.forEach((it, i) => {
+  const b = buttons[i] = document.createElement("button"), p = pts[i];
+  if (it.blur != null) b.style.setProperty("--blur", it.blur + "px");
+  setState(b, i);
+  b.onclick = () => {
+    if (!avail(i)) { shake(b); return toast("Not yet… ✨"); }
+    if (!isOn(i)) { pending = [b, i]; grabNum.textContent = "#" + (i + 1); return grab.showModal(); }
+    dIcon.innerHTML = iconHTML(it.icon).replace(' class="icon"', "");
+    dName.textContent = it.name; dNote.textContent = it.note; dNum.textContent = `present #${i + 1}`; dlg.showModal();
+  };
+  place(b, p); lines[i] = line(p.parent, p, isOn(i)); tree.append(b);
+});
+
+const cake = document.createElement("button");
+cake.innerHTML = `<span class="icon">🎂</span>`;
+place(cake, cakePt); const cakeLine = line(cakePt.parent, cakePt, false); tree.append(cake);
+function updateCake() {
+  const done = ITEMS.every((_, i) => isOn(i));
+  cake.className = "node cake " + (done ? "unlocked" : "locked");
+  cakeLine.classList.toggle("lit", done);
+  return done;
+}
+updateCake();
+cake.onclick = () => updateCake() ? location.href = "birthday.html"
+  : (shake(cake), toast(`${ITEMS.filter((_, i) => !isOn(i)).length} more to go… 🎁`));
+
+// closing the grab popup (button, Esc or back) claims the gift: glow + light up its line
+grab.addEventListener("close", () => {
+  if (!pending) return;
+  const [b, i] = pending; pending = null;
+  claimed.push(i);
+  buttons.forEach(setState); // also gives the next gift its halo
+  b.classList.add("new"); lines[i].classList.add("lit");
+  updateCake();
+});
+
+const rootEl = document.createElement("div");
+rootEl.className = "root"; rootEl.textContent = ROOT; place(rootEl, rootPt); tree.append(rootEl);
+
+// floating light motes over the meadow
+for (let i = 0; i < 18; i++) {
+  const m = document.createElement("span"), s = 2 + Math.random() * 3;
+  m.className = "mote";
+  Object.assign(m.style, { width: s + "px", height: s + "px", left: Math.random() * 100 + "vw",
+    top: 40 + Math.random() * 60 + "vh", animationDuration: 6 + Math.random() * 6 + "s",
+    animationDelay: -Math.random() * 10 + "s" });
+  document.body.append(m);
+}
+
+addEventListener("load", () => scrollTo(0, document.body.scrollHeight)); // start at the bottom like Sky
+</script>
+</body>
+</html>
