@@ -63,7 +63,7 @@
            pointer-events: none; background: #fff6d6; box-shadow: 0 0 6px #ffd75e, 0 0 14px #ffc83d;
            animation: spark ease-out forwards; }
   @keyframes spark { to { translate: var(--dx) var(--dy); opacity: 0; scale: .3; } }
-  .tree line.flow { transition: stroke-dashoffset .85s ease-in-out; stroke-width: 2.5;
+  .tree line.flow { transition: stroke-dashoffset .45s ease-in-out; stroke-width: 2.5;
                     filter: drop-shadow(0 0 6px #ffd75e); }
   .glowout { position: fixed; z-index: 30; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%;
              pointer-events: none; background: radial-gradient(#fffaf0 30%, #ffe9b0 50%, #ffe9b000 70%);
@@ -116,19 +116,35 @@
            opacity: 0; transition: opacity .3s; pointer-events: none; }
   .toast.show { opacity: 1; }
 
-  dialog { margin: auto; border: none; border-radius: 22px; padding: 26px 22px; max-width: min(340px, 90vw);
-           text-align: center; color: #fff; background: linear-gradient(#1f2742, #173222);
-           box-shadow: 0 0 0 1px #fff3, 0 0 40px #ffe9b066; }
-  dialog::backdrop { background: #000a; backdrop-filter: blur(3px); }
+  /* Sky-style popups: no box, just light and text floating over the dimmed world */
+  dialog { margin: auto; border: none; padding: 10px 16px; max-width: min(340px, 90vw); overflow: visible;
+           text-align: center; color: #fff; background: none; text-shadow: 0 0 10px #0008; }
+  dialog[open] { animation: dlgin .6s ease-out; }
+  @keyframes dlgin { from { opacity: 0; translate: 0 14px; } }
+  dialog::backdrop { background: radial-gradient(#0b1a2acc, #000d 75%); backdrop-filter: blur(4px); }
   dialog .big { font-size: 70px; }
   dialog .big img { width: 140px; height: 140px; object-fit: contain; }
-  dialog h2 { font-weight: normal; margin: 8px 0; }
+  dialog h2 { font-weight: normal; margin: 6px 0; letter-spacing: 1px; }
   dialog p { opacity: .9; line-height: 1.4; }
   dialog .num { margin-top: 10px; font-size: 12px; letter-spacing: 2px; opacity: .6; }
   dialog .gnum { color: #ffe9b0; text-shadow: 0 0 12px #ffe9b0; }
-  #grab .big { animation: pulse 1.8s ease-in-out infinite; }
-  dialog button { margin-top: 18px; padding: 8px 22px; border-radius: 20px; border: 1px solid #fff8;
-                  background: #fff2; color: #fff; font: inherit; }
+  dialog .small { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; opacity: .7; }
+  /* glowing light, like a winged light / candle light */
+  .orb { position: relative; width: 120px; height: 120px; margin: 0 auto 14px; display: grid; place-items: center; }
+  .orb::before { content: ""; position: absolute; inset: 0; border-radius: 50%;
+                 background: radial-gradient(#fffbea 0 12%, #ffe9b0aa 24%, #ffc83d33 45%, #0000 70%);
+                 animation: pulse 2.4s ease-in-out infinite; }
+  .orb::after { content: "✦"; position: relative; font-size: 46px; color: #fffbea;
+                text-shadow: 0 0 10px #fff, 0 0 24px #ffd75e, 0 0 50px #ffc83d; animation: spin 12s linear infinite; }
+  @keyframes spin { to { rotate: 1turn; } }
+  /* thin gold divider with a diamond, like Sky's menus */
+  .rule { display: flex; align-items: center; gap: 8px; margin: 12px auto; width: 70%; color: #f3d48a; font-size: 9px; }
+  .rule::before, .rule::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, #0000, #f3d48a99); }
+  .rule::after { scale: -1 1; }
+  /* round icon button */
+  dialog button { margin-top: 14px; width: 54px; height: 54px; border-radius: 50%; border: 1.5px solid #fffc;
+                  background: #fff1; color: #fff; font-size: 22px; box-shadow: 0 0 14px #ffe9b066, inset 0 0 10px #fff3; }
+  dialog button:active { scale: .92; }
 </style>
 </head>
 <body>
@@ -146,13 +162,14 @@
   <h2 id="dName"></h2>
   <p id="dNote"></p>
   <p class="num" id="dNum"></p>
-  <button onclick="dlg.close()">close</button>
+  <button onclick="dlg.close()" aria-label="close">✕</button>
 </dialog>
 <dialog id="grab">
-  <div class="big">🎁</div>
-  <p>Something new unlocked ✨</p>
+  <div class="orb"></div>
+  <p class="small">Something new unlocked</p>
+  <div class="rule">◆</div>
   <h2>Grab present <span class="gnum" id="grabNum"></span>!</h2>
-  <button onclick="grab.close()">okay! ♡</button>
+  <button onclick="grab.close()" aria-label="okay">✓</button>
 </dialog>
 <div class="toast" id="toast"></div>
 
@@ -285,7 +302,7 @@ function flowLine(l, done) {
   g.style.strokeDasharray = len; g.style.strokeDashoffset = len;
   l.after(g);
   requestAnimationFrame(() => requestAnimationFrame(() => g.style.strokeDashoffset = 0));
-  setTimeout(() => { l.classList.add("lit"); g.remove(); done(); }, 850);
+  setTimeout(() => { l.classList.add("lit"); g.remove(); done(); }, 450);
 }
 
 // heart tapped when everything is open: burst + golden light fills the screen, then the birthday page
