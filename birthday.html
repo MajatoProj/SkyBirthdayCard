@@ -3,45 +3,63 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#141033">
-<title>Happy Birthday 🎂</title>
+<meta name="theme-color" content="#0b1220">
+<title>Happy Birthday ♥</title>
 <style>
   * { box-sizing: border-box; margin: 0; }
   body { min-height: 100vh; display: grid; place-items: center; text-align: center; color: #fff;
          overflow: hidden; padding: 24px 16px;
          font-family: "Trebuchet MS", system-ui, sans-serif;
-         background: linear-gradient(#141033 0%, #3d3168 40%, #a07d9e 75%, #f0c3a4 100%); }
-  .cake { font-size: 96px; animation: float 3s ease-in-out infinite; filter: drop-shadow(0 0 25px #ffe8a3); }
-  @keyframes float { 50% { translate: 0 -12px; } }
-  h1 { font-weight: normal; font-size: clamp(32px, 10vw, 54px); margin: 18px 0 14px;
-       text-shadow: 0 0 14px #ffe8a3, 0 0 30px #ffb3c6; }
-  p { max-width: 360px; margin: 0 auto; line-height: 1.5; opacity: .92; }
-  a { display: inline-block; margin-top: 28px; color: #fff; opacity: .7; font-size: 14px; }
-  .light { position: fixed; bottom: -20px; font-size: 20px; pointer-events: none;
+         background: linear-gradient(#0b1220 0%, #16304a 35%, #1d4a52 60%, #1c4a3e 80%, #0d2a22 100%); }
+
+  /* the golden light from the tree fades away as the page appears */
+  .glowin { position: fixed; inset: 0; z-index: 5; pointer-events: none; background: #fffaf0;
+            animation: glowin 2s ease-out forwards; }
+  @keyframes glowin { 40% { background: #ffe9b0; } to { opacity: 0; } }
+
+  .heart { position: relative; font-size: 80px; line-height: 1;
+           filter: brightness(0) invert(.9) sepia(1) saturate(1.6) brightness(1.05)
+                   drop-shadow(0 0 10px #f3d48a) drop-shadow(0 0 30px #ffc83d88);
+           animation: appear 1.2s .6s both, float 3.5s 1.8s ease-in-out infinite; }
+  .heart::before { content: ""; position: absolute; inset: -40px; border-radius: 50%; z-index: -1;
+                   background: radial-gradient(#ffe9b044, #0000 65%); animation: breathe 3s ease-in-out infinite; }
+  @keyframes appear { from { opacity: 0; scale: .3; } 60% { scale: 1.15; } }
+  @keyframes float { 50% { translate: 0 -10px; } }
+  @keyframes breathe { 50% { opacity: .4; } }
+
+  h1 { font-weight: normal; font-size: clamp(22px, 6.5vw, 32px); letter-spacing: 2px; margin: 26px 0 8px;
+       text-shadow: 0 0 12px #f3d48a, 0 0 26px #ffc83d66; animation: fade 1.2s 1.3s both; }
+  .sub { font-size: 16px; letter-spacing: 1px; opacity: .85; font-style: italic;
+         animation: fade 1.2s 1.9s both; }
+  a { display: inline-block; margin-top: 34px; color: #fff; opacity: .6; font-size: 13px;
+      animation: fade 1.2s 2.6s both; }
+  @keyframes fade { from { opacity: 0; translate: 0 10px; } }
+
+  .light { position: fixed; bottom: -20px; pointer-events: none; border-radius: 50%;
+           background: #fff6d6; box-shadow: 0 0 8px #ffd75e, 0 0 16px #ffc83d;
            animation: rise linear forwards; }
-  @keyframes rise { to { translate: 0 -115vh; opacity: 0; } }
+  @keyframes rise { 20% { opacity: 1; } to { translate: var(--drift) -115vh; opacity: 0; } }
 </style>
 </head>
 <body>
+<div class="glowin"></div>
 <main>
-  <div class="cake">🎂</div>
-  <h1>Happy Birthday!</h1>
-  <!-- write your message here -->
-  <p>You unlocked everything ✨</p>
+  <div class="heart">❤️</div>
+  <h1>Happy Birthday</h1>
+  <p class="sub">en een fijne kerst</p>
   <a href="index.html">← back to the tree</a>
 </main>
 <script>
-  // floating lights / hearts like spirits rising
-  const bits = ["✦", "♥", "✧", "🤍", "💙"];
+  // little golden lights rising, like collecting light in Sky
   setInterval(() => {
-    const s = document.createElement("span");
+    const s = document.createElement("span"), size = 2 + Math.random() * 4;
     s.className = "light";
-    s.textContent = bits[Math.random() * bits.length | 0];
-    s.style.left = Math.random() * 100 + "vw";
-    s.style.animationDuration = 5 + Math.random() * 5 + "s";
+    Object.assign(s.style, { width: size + "px", height: size + "px", left: Math.random() * 100 + "vw",
+      opacity: 0, animationDuration: 6 + Math.random() * 6 + "s" });
+    s.style.setProperty("--drift", (Math.random() - .5) * 80 + "px");
     document.body.append(s);
-    setTimeout(() => s.remove(), 10000);
-  }, 350);
+    setTimeout(() => s.remove(), 12000);
+  }, 300);
 </script>
 </body>
 </html>

@@ -45,8 +45,8 @@
                   background: radial-gradient(#ffe9b070, #0000 65%); animation: halo 1.6s ease-in-out infinite; }
   @keyframes halo { 50% { opacity: .25; scale: .85; } }
   .tree line { transition: stroke .8s; }
-  .cake { width: 92px; height: 92px; font-size: 50px; }
-  .cake.unlocked { animation: pulse 1.8s ease-in-out infinite; }
+  .heart { width: 92px; height: 92px; font-size: 50px; }
+  .heart.unlocked { animation: pulse 1.8s ease-in-out infinite; }
   @keyframes pulse { 50% { scale: 1.1; filter: drop-shadow(0 0 18px #ffe9b0); } }
   .root { position: absolute; translate: -50% -50%; font-size: 30px; letter-spacing: 1px;
           text-shadow: 0 0 12px #fff8; white-space: nowrap; }
@@ -55,6 +55,20 @@
   @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
   .new { animation: reveal 1.6s ease-out; }
   @keyframes reveal { 0% { scale: .3; filter: brightness(3); } 60% { scale: 1.25; } 100% { scale: 1; } }
+
+  /* ===== Sky-style effects ===== */
+  .tree > * { transition: opacity 1.1s ease-out; transition-delay: var(--d, 0s); }
+  .tree.hidden > * { opacity: 0; }
+  .spark { position: fixed; z-index: 20; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%;
+           pointer-events: none; background: #fff6d6; box-shadow: 0 0 6px #ffd75e, 0 0 14px #ffc83d;
+           animation: spark ease-out forwards; }
+  @keyframes spark { to { translate: var(--dx) var(--dy); opacity: 0; scale: .3; } }
+  .tree line.flow { transition: stroke-dashoffset .85s ease-in-out; stroke-width: 2.5;
+                    filter: drop-shadow(0 0 6px #ffd75e); }
+  .glowout { position: fixed; z-index: 30; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%;
+             pointer-events: none; background: radial-gradient(#fffaf0 30%, #ffe9b0 50%, #ffe9b000 70%);
+             transition: scale 1.7s ease-in; }
+  .glowout.on { scale: 70; }
 
   /* ===== opening screen: unlit candle, tap to light ===== */
   #intro { position: fixed; inset: 0; z-index: 10; cursor: pointer; overflow: hidden;
@@ -125,7 +139,7 @@
 </div>
 <div class="grass"></div>
 <h1>✦ for you ✦</h1>
-<div class="tree" id="tree"><svg id="lines"></svg></div>
+<div class="tree hidden" id="tree"><svg id="lines"></svg></div>
 
 <dialog id="dlg">
   <div class="big" id="dIcon"></div>
@@ -184,8 +198,8 @@ const pts = ITEMS.map(it => {
   const n = ++trunk.sides[it.side];
   return { x: it.side === "left" ? -1 : 1, y: trunk.y + 0.35 + 0.45 * n, parent: trunk };
 });
-const cakePt = { x: 0, y: Math.max(row + 1, ...pts.map(p => Math.ceil(p.y))), parent: trunk };
-const H = cakePt.y * ROW + 150;
+const heartPt = { x: 0, y: Math.max(row + 1, ...pts.map(p => Math.ceil(p.y))), parent: trunk };
+const H = heartPt.y * ROW + 150;
 tree.style.height = H + "px";
 
 function place(el, p) {
@@ -199,7 +213,7 @@ function line(a, b, lit) {
   const W = tree.clientWidth, X = p => W * (0.5 + p.x * SIDE), Y = p => H - 50 - p.y * ROW;
   const dx = X(b) - X(a), dy = Y(b) - Y(a), len = Math.hypot(dx, dy);
   const gap = (p, r) => [X(p) + dx / len * r, Y(p) + dy / len * r];
-  const [x1, y1] = gap(a, a === rootPt ? 24 : 40), [x2, y2] = gap(b, b === cakePt ? -52 : -40);
+  const [x1, y1] = gap(a, a === rootPt ? 24 : 40), [x2, y2] = gap(b, b === heartPt ? -52 : -40);
   l.setAttribute("x1", x1); l.setAttribute("y1", y1);
   l.setAttribute("x2", x2); l.setAttribute("y2", y2);
   if (lit) l.classList.add("lit");
@@ -237,41 +251,83 @@ ITEMS.forEach((it, i) => {
   place(b, p); lines[i] = line(p.parent, p, isOn(i)); tree.append(b);
 });
 
-const cake = document.createElement("button");
-cake.innerHTML = `<span class="icon">🎂</span>`;
-place(cake, cakePt); const cakeLine = line(cakePt.parent, cakePt, false); tree.append(cake);
-function updateCake() {
-  const done = ITEMS.every((_, i) => isOn(i));
-  cake.className = "node cake " + (done ? "unlocked" : "locked");
-  cakeLine.classList.toggle("lit", done);
-  return done;
+const heart = document.createElement("button");
+heart.innerHTML = `<span class="icon">❤️</span>`;
+place(heart, heartPt); const heartLine = line(heartPt.parent, heartPt, false); tree.append(heart);
+const allDone = () => ITEMS.every((_, i) => isOn(i));
+function updateHeart() {
+  heart.className = "node heart " + (allDone() ? "unlocked" : "locked");
 }
-updateCake();
-cake.onclick = () => updateCake() ? location.href = "birthday.html"
-  : (shake(cake), toast(`${ITEMS.filter((_, i) => !isOn(i)).length} more to go… 🎁`));
+updateHeart();
+heart.onclick = () => allDone() ? goBirthday()
+  : (shake(heart), toast(`${ITEMS.filter((_, i) => !isOn(i)).length} more to go… 🎁`));
 
-// closing the grab popup (button, Esc or back) claims the gift: glow + light up its line
+// ===== Sky-style effects =====
+const center = el => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+
+// little golden lights flying out from a point (up = how much they drift upward, like collecting light)
+function burst([x, y], n = 22, up = 40) {
+  for (let k = 0; k < n; k++) {
+    const s = document.createElement("span"), a = Math.random() * Math.PI * 2, d = 30 + Math.random() * 80;
+    s.className = "spark";
+    Object.assign(s.style, { left: x + "px", top: y + "px", animationDuration: .9 + Math.random() * .9 + "s" });
+    s.style.setProperty("--dx", Math.cos(a) * d + "px");
+    s.style.setProperty("--dy", Math.sin(a) * d - up - Math.random() * up + "px");
+    document.body.append(s);
+    setTimeout(() => s.remove(), 2000);
+  }
+}
+
+// light travels along a line from the gift below to the new one, then calls done
+function flowLine(l, done) {
+  const g = l.cloneNode(), len = l.getTotalLength();
+  g.classList.add("lit", "flow");
+  g.style.strokeDasharray = len; g.style.strokeDashoffset = len;
+  l.after(g);
+  requestAnimationFrame(() => requestAnimationFrame(() => g.style.strokeDashoffset = 0));
+  setTimeout(() => { l.classList.add("lit"); g.remove(); done(); }, 850);
+}
+
+// heart tapped when everything is open: burst + golden light fills the screen, then the birthday page
+function goBirthday() {
+  const c = center(heart), w = document.createElement("div");
+  burst(c, 45, 60);
+  w.className = "glowout"; w.style.left = c[0] + "px"; w.style.top = c[1] + "px";
+  document.body.append(w);
+  requestAnimationFrame(() => requestAnimationFrame(() => w.classList.add("on")));
+  setTimeout(() => location.href = "birthday.html", 1700);
+}
+
+// closing the grab popup (button, Esc or back) claims the gift: light flows up the line, then it lights up
 grab.addEventListener("close", () => {
   if (!pending) return;
   const [b, i] = pending; pending = null;
   claimed.push(i);
-  buttons.forEach(setState); // also gives the next gift its halo
-  b.classList.add("new"); lines[i].classList.add("lit");
-  updateCake();
+  flowLine(lines[i], () => {
+    buttons.forEach(setState); // also gives the next gift(s) their halo
+    b.classList.add("new"); burst(center(b));
+    if (allDone()) flowLine(heartLine, () => { updateHeart(); heart.classList.add("new"); burst(center(heart), 34); });
+  });
 });
 
-// opening screen: tap lights the flame, the glow fills the screen, then fades into the tree
+// opening screen: tap lights the flame (sparks rise), the glow fills the screen, the tree fades in branch by branch
 introName.textContent = ROOT;
 intro.onclick = () => {
   if (intro.classList.contains("lit")) return;
   intro.classList.add("lit");
+  const flame = intro.querySelector(".flame");
+  [0, 350, 800, 1300].forEach(t => setTimeout(() => burst(center(flame), 10, 90), t));
   setTimeout(() => intro.classList.add("bloom"), 1600);
-  setTimeout(() => intro.classList.add("gone"), 2700);
+  setTimeout(() => { intro.classList.add("gone"); tree.classList.remove("hidden"); }, 2700);
   setTimeout(() => intro.remove(), 4200);
 };
 
 const rootEl = document.createElement("div");
 rootEl.className = "root"; rootEl.textContent = ROOT; place(rootEl, rootPt); tree.append(rootEl);
+// fade-in order: name first, then lines, then each gift from the bottom up, heart last
+rootEl.style.setProperty("--d", "0s"); svg.style.setProperty("--d", ".3s");
+buttons.forEach((b, i) => b.style.setProperty("--d", .5 + i * .2 + "s"));
+heart.style.setProperty("--d", .6 + buttons.length * .2 + "s");
 
 // floating light motes over the meadow
 for (let i = 0; i < 18; i++) {
